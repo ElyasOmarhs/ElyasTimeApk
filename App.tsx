@@ -31,12 +31,12 @@ import { Menu, Calendar } from 'lucide-react';
 
 const DEFAULT_STATE: AppState = {
   teachers: [
-    { id: 't1', name: 'ښاغلی احمد', color: COLORS[6] },
-    { id: 't2', name: 'آغلې ملالۍ', color: COLORS[10] },
+    { id: 't1', name: 'الیاس عمر', color: COLORS[6] },
+    { id: 't2', name: 'ریان الاندلسي', color: COLORS[10] },
   ],
   classes: [
-    { id: 'c1', name: '۱۰۱ ټولګی' },
-    { id: 'c2', name: '۱۰۲ ټولګی' },
+    { id: 'c1', name: 'ابتدائیه' },
+    { id: 'c2', name: 'متوسطه' },
   ],
   schedule: {},
   settings: {
@@ -62,9 +62,9 @@ const DEFAULT_STATE: AppState = {
     language: 'ps'
   },
   printDesign: {
-    title: 'د ښوونځي اونیز مهال ویش',
+    title: 'د مدرسې اونیز مهال ویش',
     subtitle: 'ښوونیز کال ۱۴۰۳-۱۴۰۴',
-    footerText: 'د ښوونځي اداره',
+    footerText: 'د مدرسې اداره',
     watermarkText: 'مسوده',
     
     showLegend: true,
