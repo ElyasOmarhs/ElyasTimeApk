@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'   # دلته مو بدلون راوست (له 17 څخه 21 ته)
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -58,3 +58,4 @@ jobs:
         with:
           name: debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          
