@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '21'   # دلته مو بدلون راوست (له 17 څخه 21 ته)
+          java-version: '21'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -47,15 +47,22 @@ jobs:
           npx cap add android
           npx cap sync
 
+      - name: Fix Kotlin Duplicate Classes
+        run: |
+          cd android
+          echo "android.useAndroidX=true" >> gradle.properties
+          echo "android.enableJetifier=true" >> gradle.properties
+          # دا لاندې کرښه د Kotlin د ټکر مخه نیسي
+          echo "kotlin.stdlib.default.dependency=false" >> gradle.properties
+
       - name: Build APK with Gradle
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          
