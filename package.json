@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "د مدرسې د مهال ویش هوښیار سیستم",
   "author": "Elyas Omar",
+  "homepage": "https://elyasomarhs.github.io/elyastimeapk",  
   "main": "electron-main.js",
   "scripts": {
     "dev": "vite",
