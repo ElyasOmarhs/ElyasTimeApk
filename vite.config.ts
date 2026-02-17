@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
     return {
       // 🟢 تر ټولو مهم بدلون: د الکټرون لپاره 'base' باید './' وي
       // دا د سپینې صفحې (White Screen) مخه نیسي
-      base: './',
+      base: "/elyastimeapk/",
 
       server: {
         port: 3000,
