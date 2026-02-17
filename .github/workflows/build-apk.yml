@@ -50,16 +50,24 @@ jobs:
       - name: Fix Kotlin Duplicate Classes
         run: |
           cd android
-          echo "android.useAndroidX=true" >> gradle.properties
-          echo "android.enableJetifier=true" >> gradle.properties
-          # دا لاندې کرښه د Kotlin د ټکر مخه نیسي
-          echo "kotlin.stdlib.default.dependency=false" >> gradle.properties
+          # دلته موږ ګریډل ته وایو چې یوازې یوه مشخصه نسخه وکاروي ترڅو ټکر نه وي
+          cat <<EOF >> build.gradle
+          allprojects {
+              configurations.all {
+                  resolutionStrategy {
+                      force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
+                      force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22'
+                      force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'
+                  }
+              }
+          }
+          EOF
 
       - name: Build APK with Gradle
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
