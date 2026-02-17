@@ -1,4 +1,4 @@
-name: Build Android APK (Mobile Only)
+name: Build Android APK (Fix Fullscreen)
 
 on:
   workflow_dispatch:
@@ -24,16 +24,40 @@ jobs:
         with:
           node-version: 20
 
+      # ۱. دلته موږ د سټاټوس بار پلګین انسټالوو
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install @capacitor/status-bar
 
-      - name: Install Capacitor Core & Android (If missing)
+      # ۲. دلته موږ د Capacitor تنظیمات جوړوو چې سټاټوس بار جلا کړي
+      - name: Create Capacitor Config
+        run: |
+          cat <<EOF > capacitor.config.json
+          {
+            "appId": "com.elyasomar.timeapp",
+            "appName": "ElyasTimeApk",
+            "webDir": "dist",
+            "server": {
+              "androidScheme": "https"
+            },
+            "plugins": {
+              "StatusBar": {
+                "overlaysWebView": false,
+                "style": "DARK",
+                "backgroundColor": "#ffffff"
+              }
+            }
+          }
+          EOF
+
+      - name: Install Capacitor Core & Android
         run: |
           npm install @capacitor/core
           npm install @capacitor/cli --save-dev
           npm install @capacitor/android
 
-      - name: Initialize Capacitor
+      - name: Initialize Capacitor (If needed)
         run: |
           if [ ! -f "capacitor.config.ts" ] && [ ! -f "capacitor.config.json" ]; then
             npx cap init "ElyasTimeApk" "com.elyasomar.timeapp" --web-dir=dist
@@ -47,10 +71,17 @@ jobs:
           npx cap add android
           npx cap sync
 
+      # ۳. دا ډیره مهمه برخه ده: دلته موږ د انډرایډ ۱۵ فول سکرین حالت بندوو
+      - name: Disable Android 15 Edge-to-Edge
+        run: |
+          cd android/app/src/main/res/values
+          # په styles.xml کې د فول سکرین بندولو کوډ ورزیاتول
+          sed -i 's/<style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">/<style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">\n        <item name="android:windowOptOutEdgeToEdgeEnforcement">true<\/item>/' styles.xml
+          cat styles.xml
+
       - name: Fix Kotlin Duplicate Classes
         run: |
           cd android
-          # دلته موږ ګریډل ته وایو چې یوازې یوه مشخصه نسخه وکاروي ترڅو ټکر نه وي
           cat <<EOF >> build.gradle
           allprojects {
               configurations.all {
