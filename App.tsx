@@ -33,391 +33,429 @@ const DEFAULT_STATE: AppState = {
   teachers: [
     { id: 't1', name: 'ښوونکی ۱', color: COLORS[6] },
     { id: 't2', name: 'ښوونکی ۲', color: COLORS[10] },
-    { id: 't3', name: 'ښوونکی ۳', color: COLORS[14] },
   ],
   classes: [
-    { id: 'c1', name: 'لومړی ټولګی' },
-    { id: 'c2', name: 'دوهم ټولګی' },
+    { id: 'c1', name: '۱ ټولګی' },
+    { id: 'c2', name: '۲ ټولګی' },
   ],
-  lessons: [],
-  timeSettings: {
-    days: 6,
-    periodsPerDay: 6,
-    periodDuration: 45,
-    startTime: '08:00',
-    breaks: [
-      { afterPeriod: 2, duration: 15, label: 'تفریح' },
-      { afterPeriod: 4, duration: 30, label: 'د غرمې وقفه' },
-    ],
-    weekStartDay: 6, // Saturday
-    customDayNames: { 
-      0: 'یکشنبه', 1: 'دوشنبه', 2: 'سه شنبه', 3: 'چهارشنبه', 4: 'پنجشنبه', 5: 'جمعه', 6: 'شنبه' 
+  schedule: {},
+  settings: {
+    lessonDuration: 45,
+    breakDuration: 15,
+    lessonsBeforeBreak: 2,
+    startTime: "08:00",
+    totalLessons: 6,
+  },
+  design: {
+    lesson: {
+      borderColor: '#cbd5e1', backgroundColor: '#ffffff', borderWidth: 1,
+      borderRadius: 8, margin: 4, borderStyle: 'solid', shadow: 'none', fontSize: 13
+    },
+    break: {
+      borderColor: '#e2e8f0', backgroundColor: '#f8fafc', borderWidth: 0,
+      borderRadius: 8, margin: 4, borderStyle: 'none', shadow: 'inner'
     }
-  },
-  designSettings: {
-    showTeacherName: true,
-    showSubject: true,
-    showRoom: false,
-    showTime: true,
-    fontScale: 1,
-    colorScheme: 'modern',
-    compactMode: false,
-    showBreaks: true,
-    headerColor: '#4f46e5',
-    tableBorderColor: '#e2e8f0',
-    fontFamily: 'Vazirmatn'
-  },
-  printSettings: {
-    paperSize: 'a4',
-    orientation: 'landscape',
-    showHeader: true,
-    showFooter: true,
-    headerText: 'د مدرسې مهال ویش',
-    footerText: 'جوړ شوی د هوښیار مهال ویش سیستم لخوا',
-    scale: 1,
-    colorMode: 'color',
-    includeTeachersList: true,
-    includeClassesList: true
   },
   ui: {
     theme: 'system',
-    language: 'ps',
-    sidebarCollapsed: false,
-    activeTab: 'dashboard',
-    primaryColor: 'indigo',
-    direction: 'rtl',
-    showHeader: true,
-    showFooter: true
+    primaryColor: '#6366f1',
+    language: 'ps'
   },
-  schedules: [],
-  currentScheduleId: null,
-  activeProjectId: null,
-  projects: []
+  printDesign: {
+    title: 'د مدرسې اونیز مهال ویش',
+    subtitle: 'ښوونیز کال ۱۴۰۳-۱۴۰۴',
+    footerText: 'د مدرسې اداره',
+    watermarkText: 'مسوده',
+    
+    showLegend: true,
+    showTeacherName: true,
+    showTimes: true,
+    showFooter: true,
+    showWatermark: false,
+
+    scale: 100,
+    paddingX: 40,
+    paddingY: 40,
+    direction: 'rtl',
+
+    theme: 'classic',
+    primaryColor: '#1e293b',
+    headerStyle: 'solid',
+    fontStyle: 'normal',
+
+    fontSizeTitle: 32,
+    fontSizeSubtitle: 18,
+    fontSizeHeader: 14,
+    fontSizeSubject: 14,
+    fontSizeTeacher: 11,
+
+    teacherDisplayMode: 'badge',
+    cellMinHeight: 90,
+    cellVerticalAlign: 'center',
+    cellGap: 6,
+    cellPadding: 4
+  }
 };
 
-// --- Actions ---
-
 type Action =
-  | { type: 'SET_STATE'; payload: AppState }
-  | { type: 'UPDATE_TEACHERS'; payload: Teacher[] }
-  | { type: 'UPDATE_CLASSES'; payload: ClassGroup[] }
-  | { type: 'UPDATE_LESSONS'; payload: LessonData[] }
-  | { type: 'UPDATE_TIME_SETTINGS'; payload: TimeSettings }
-  | { type: 'UPDATE_DESIGN_SETTINGS'; payload: DesignSettings }
-  | { type: 'UPDATE_PRINT_SETTINGS'; payload: PrintDesignSettings }
-  | { type: 'UPDATE_UI_SETTINGS'; payload: Partial<UISettings> }
-  | { type: 'SET_ACTIVE_TAB'; payload: string }
-  | { type: 'ADD_TOAST'; payload: Omit<ToastMessage, 'id'> }
-  | { type: 'REMOVE_TOAST'; payload: string }
-  | { type: 'SET_SCHEDULES'; payload: Schedule[] }
-  | { type: 'SET_CURRENT_SCHEDULE'; payload: string | null }
-  | { type: 'CREATE_PROJECT'; payload: { name: string, description?: string } }
-  | { type: 'UPDATE_PROJECT'; payload: { id: string, name: string, description?: string } }
-  | { type: 'DELETE_PROJECT'; payload: string }
-  | { type: 'SET_ACTIVE_PROJECT'; payload: string }
-  | { type: 'IMPORT_PROJECT_DATA'; payload: Partial<AppState> };
+  | { type: 'INIT'; payload: any }
+  | { type: 'UNDO' }
+  | { type: 'REDO' }
+  | { type: 'ADD_TEACHER'; payload: Teacher }
+  | { type: 'UPDATE_TEACHER'; payload: Teacher }
+  | { type: 'DELETE_TEACHER'; payload: string }
+  | { type: 'ADD_CLASS'; payload: ClassGroup }
+  | { type: 'UPDATE_CLASS'; payload: ClassGroup }
+  | { type: 'DELETE_CLASS'; payload: string }
+  | { type: 'UPDATE_SETTINGS'; payload: Partial<TimeSettings> }
+  | { type: 'UPDATE_DESIGN'; payload: Partial<DesignSettings> }
+  | { type: 'UPDATE_PRINT_DESIGN'; payload: Partial<PrintDesignSettings> }
+  | { type: 'UPDATE_UI'; payload: Partial<UISettings> }
+  | { type: 'SET_LESSON'; payload: { key: string; data: LessonData | null } }
+  | { type: 'MOVE_LESSON'; payload: { fromKey: string; toKey: string } }
+  | { type: 'OPTIMIZE_SCHEDULE' }
+  | { type: 'REPLACE_SCHEDULE'; payload: Schedule }
+  | { type: 'RESET_PROJECT' }; // دا اکشن موږ لاندې په اصلي Reducer کې هندل کوو
 
-function reducer(state: AppState, action: Action): AppState {
-  switch (action.type) {
-    case 'SET_STATE':
-      return { ...action.payload };
-    case 'UPDATE_TEACHERS':
-      return { ...state, teachers: action.payload };
-    case 'UPDATE_CLASSES':
-      return { ...state, classes: action.payload };
-    case 'UPDATE_LESSONS':
-      return { ...state, lessons: action.payload };
-    case 'UPDATE_TIME_SETTINGS':
-      return { ...state, timeSettings: action.payload };
-    case 'UPDATE_DESIGN_SETTINGS':
-      return { ...state, designSettings: action.payload };
-    case 'UPDATE_PRINT_SETTINGS':
-      return { ...state, printSettings: action.payload };
-    case 'UPDATE_UI_SETTINGS':
-      // When primary color changes, update CSS variables
-      if (action.payload.primaryColor) {
-        const color = PRIMARY_BRAND_COLORS[action.payload.primaryColor as keyof typeof PRIMARY_BRAND_COLORS] || PRIMARY_BRAND_COLORS.indigo;
-        // Logic to update CSS variables would go here in a useEffect, handled by App component
-      }
-      return { ...state, ui: { ...state.ui, ...action.payload } };
-    case 'SET_ACTIVE_TAB':
-      return { ...state, ui: { ...state.ui, activeTab: action.payload } };
-    case 'SET_SCHEDULES':
-      return { ...state, schedules: action.payload };
-    case 'SET_CURRENT_SCHEDULE':
-      return { ...state, currentScheduleId: action.payload };
-    case 'CREATE_PROJECT':
-      const newProject = {
-        id: generateId(),
-        name: action.payload.name,
-        description: action.payload.description,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        data: {
-          teachers: DEFAULT_STATE.teachers,
-          classes: DEFAULT_STATE.classes,
-          lessons: [],
-          timeSettings: DEFAULT_STATE.timeSettings,
-          designSettings: DEFAULT_STATE.designSettings
-        }
-      };
-      return {
-        ...state,
-        projects: [...state.projects, newProject],
-        activeProjectId: newProject.id,
-        teachers: newProject.data.teachers,
-        classes: newProject.data.classes,
-        lessons: newProject.data.lessons,
-        timeSettings: newProject.data.timeSettings,
-        designSettings: newProject.data.designSettings
-      };
-    case 'UPDATE_PROJECT':
-      return {
-        ...state,
-        projects: state.projects.map(p => 
-          p.id === action.payload.id 
-            ? { ...p, name: action.payload.name, description: action.payload.description, updatedAt: Date.now() } 
-            : p
-        )
-      };
-    case 'DELETE_PROJECT':
-      const remainingProjects = state.projects.filter(p => p.id !== action.payload);
-      const nextProjectId = remainingProjects.length > 0 ? remainingProjects[0].id : null;
-      
-      // If we're deleting the active project, switch to another one or reset
-      if (state.activeProjectId === action.payload) {
-        if (nextProjectId) {
-          const nextProject = remainingProjects[0];
-          return {
-            ...state,
-            projects: remainingProjects,
-            activeProjectId: nextProjectId,
-            teachers: nextProject.data.teachers,
-            classes: nextProject.data.classes,
-            lessons: nextProject.data.lessons,
-            timeSettings: nextProject.data.timeSettings,
-            designSettings: nextProject.data.designSettings
-          };
-        } else {
-          // Reset to default if no projects left
-          return {
-            ...DEFAULT_STATE,
-            projects: [],
-            activeProjectId: null
-          };
-        }
-      }
-      
-      return { ...state, projects: remainingProjects };
-      
-    case 'SET_ACTIVE_PROJECT':
-      const projectToLoad = state.projects.find(p => p.id === action.payload);
-      if (!projectToLoad) return state;
-      
-      // Save current project state first
-      const updatedProjects = state.projects.map(p => {
-        if (p.id === state.activeProjectId) {
-          return {
-            ...p,
-            updatedAt: Date.now(),
-            data: {
-              teachers: state.teachers,
-              classes: state.classes,
-              lessons: state.lessons,
-              timeSettings: state.timeSettings,
-              designSettings: state.designSettings
-            }
-          };
-        }
-        return p;
-      });
-      
-      return {
-        ...state,
-        projects: updatedProjects,
-        activeProjectId: action.payload,
-        teachers: projectToLoad.data.teachers,
-        classes: projectToLoad.data.classes,
-        lessons: projectToLoad.data.lessons,
-        timeSettings: projectToLoad.data.timeSettings,
-        designSettings: projectToLoad.data.designSettings
-      };
+const HISTORY_LIMIT = 100;
 
-    case 'IMPORT_PROJECT_DATA':
-        return {
-            ...state,
-            ...action.payload
-        };
-      
-    default:
-      return state;
-  }
+interface HistoryState {
+  past: Schedule[]; 
+  present: AppState;
+  future: Schedule[];
 }
 
-// --- Context ---
+const reducer = (state: HistoryState, action: Action): HistoryState => {
+  const { past, present, future } = state;
 
-export const AppStateContext = createContext<{
+  switch (action.type) {
+    case 'INIT':
+      const safeState = deepMerge(DEFAULT_STATE, action.payload);
+      return { past: [], present: safeState, future: [] };
+
+    // ✅ د نوي پروجکټ لپاره اصلاح شوی کوډ
+    // دا برخه ډاډ ورکوي چې ټول ډیټا او تاریخچه (History) پاکه شي
+    case 'RESET_PROJECT':
+        return {
+            past: [],   // تاریخچه پاکوي
+            future: [], // راتلونکی پاکوي
+            present: {
+                ...DEFAULT_STATE,
+                teachers: [], // ښوونکي خالي کوي
+                classes: [],  // ټولګي خالي کوي
+                schedule: {}, // مهال ویش خالي کوي
+                ui: present.ui // ⚠️ یوازې د UI تنظیمات (لکه ژبه او رنګ) له زوړ حالت څخه ساتي
+            }
+        };
+    
+    case 'UNDO':
+      if (past.length === 0) return state;
+      const prevSchedule = past[past.length - 1];
+      return { 
+        past: past.slice(0, -1), 
+        present: { ...present, schedule: prevSchedule }, 
+        future: [present.schedule, ...future] 
+      };
+
+    case 'REDO':
+      if (future.length === 0) return state;
+      const nextSchedule = future[0];
+      return { 
+        past: [...past, present.schedule], 
+        present: { ...present, schedule: nextSchedule }, 
+        future: future.slice(1) 
+      };
+
+    default:
+      const newPresent = appReducer(present, action);
+      if (newPresent === present) return state;
+
+      // Only record history for schedule-related changes
+      const isUndoable = ['SET_LESSON', 'MOVE_LESSON', 'REPLACE_SCHEDULE', 'OPTIMIZE_SCHEDULE'].includes(action.type);
+      
+      if (isUndoable) {
+        const updatedPast = [...past, present.schedule];
+        if (updatedPast.length > HISTORY_LIMIT) updatedPast.shift();
+        return { past: updatedPast, present: newPresent, future: [] };
+      }
+
+      return { ...state, present: newPresent };
+  }
+};
+
+const appReducer = (state: AppState, action: Action): AppState => {
+  switch (action.type) {
+    // RESET_PROJECT دلته نور نشته، پاس انتقال شو ترڅو History هم پاکه کړي
+    case 'ADD_TEACHER': return { ...state, teachers: [...state.teachers, action.payload] };
+    case 'UPDATE_TEACHER': 
+      return { ...state, teachers: state.teachers.map(t => t.id === action.payload.id ? action.payload : t) };
+    case 'DELETE_TEACHER':
+      const newSchedT = { ...state.schedule };
+      Object.keys(newSchedT).forEach(k => {
+        if (newSchedT[k].teacherId === action.payload) delete newSchedT[k];
+      });
+      return { ...state, teachers: state.teachers.filter(t => t.id !== action.payload), schedule: newSchedT };
+    case 'ADD_CLASS': return { ...state, classes: [...state.classes, action.payload] };
+    case 'UPDATE_CLASS': 
+      return { ...state, classes: state.classes.map(c => c.id === action.payload.id ? action.payload : c) };
+    case 'DELETE_CLASS':
+      const newSchedC = { ...state.schedule };
+      Object.keys(newSchedC).forEach(k => {
+        if (k.startsWith(`${action.payload}_`)) delete newSchedC[k];
+      });
+      return { ...state, classes: state.classes.filter(c => c.id !== action.payload), schedule: newSchedC };
+    case 'UPDATE_SETTINGS': return { ...state, settings: { ...state.settings, ...action.payload } };
+    case 'UPDATE_DESIGN': return { ...state, design: { ...state.design, ...action.payload } };
+    case 'UPDATE_PRINT_DESIGN': return { ...state, printDesign: { ...state.printDesign, ...action.payload } };
+    case 'UPDATE_UI': return { ...state, ui: { ...state.ui, ...action.payload } };
+    case 'SET_LESSON':
+      const newSchedule = { ...state.schedule };
+      if (action.payload.data === null) {
+        delete newSchedule[action.payload.key];
+      } else {
+        newSchedule[action.payload.key] = action.payload.data;
+      }
+      return { ...state, schedule: newSchedule };
+    case 'MOVE_LESSON':
+      const { fromKey, toKey } = action.payload;
+      const schedCopy = { ...state.schedule };
+      const itemToMove = schedCopy[fromKey];
+      const itemAtTarget = schedCopy[toKey];
+      if (!itemToMove) return state;
+      schedCopy[toKey] = itemToMove;
+      if (itemAtTarget) {
+        schedCopy[fromKey] = itemAtTarget;
+      } else {
+        delete schedCopy[fromKey];
+      }
+      return { ...state, schedule: schedCopy };
+    case 'OPTIMIZE_SCHEDULE':
+        const slots = calculateTimeSlots(state.settings);
+        const optimizedSchedule = runOptimization(state.schedule, state.classes, slots);
+        return { ...state, schedule: optimizedSchedule };
+    
+    case 'REPLACE_SCHEDULE':
+        return { ...state, schedule: action.payload };
+    default: return state;
+  }
+};
+
+interface AppContextType {
   state: AppState;
   dispatch: React.Dispatch<Action>;
-  addToast: (type: 'success' | 'error' | 'info', message: string, duration?: number) => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  toasts: ToastMessage[];
+  addToast: (type: ToastMessage['type'], msg: string) => void;
+  removeToast: (id: string) => void;
   t: (key: string) => string;
-}>({
-  state: DEFAULT_STATE,
-  dispatch: () => null,
-  addToast: () => {},
-  t: () => ''
-});
+}
 
-// --- Main Component ---
+export const AppContext = createContext<AppContextType>({} as any);
+
+const STORAGE_KEY = 'school_scheduler_master_v2';
 
 export default function App() {
-  // Load state from local storage or use default
-  const [store, dispatch] = useReducer(reducer, DEFAULT_STATE, (defaultState) => {
+  const initData = (): HistoryState => {
     try {
-      const saved = localStorage.getItem('school_scheduler_state');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Merge with default to ensure new fields are present
-        return deepMerge(defaultState, parsed);
+      const local = localStorage.getItem(STORAGE_KEY);
+      if (local) {
+        const parsed = JSON.parse(local);
+        const mergedState = deepMerge(DEFAULT_STATE, parsed);
+        return { past: [], present: mergedState, future: [] };
       }
-    } catch (e) {
-      console.error('Failed to load state', e);
-    }
-    return defaultState;
-  });
+    } catch (e) { console.error(e); }
+    return { past: [], present: DEFAULT_STATE, future: [] };
+  };
 
+  const [store, dispatch] = useReducer(reducer, {}, initData);
+  const [activePage, setActivePage] = useState('dashboard');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
+  const [hasSelectedProject, setHasSelectedProject] = useState(false);
 
-  // Initialize theme
+  // Translation Helper
+  const t = (key: string) => {
+    const lang = store.present.ui.language || 'ps';
+    const dict = translations[lang] || translations['ps'] || {};
+    return dict[key] || translations['ps']?.[key] || key;
+  };
+
+  // --- Live Effects ---
   useEffect(() => {
-    const applyTheme = () => {
-      const isDark = 
-        store.ui.theme === 'dark' || 
-        (store.ui.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      
-      if (isDark) {
-        document.documentElement.classList.add('dark');
+    const { theme, primaryColor, language } = store.present.ui;
+    const root = window.document.documentElement;
+
+    // RTL/LTR Switch
+    const isRtl = language !== 'en';
+    root.dir = isRtl ? 'rtl' : 'ltr';
+    root.lang = language;
+
+    // Theme Switch
+    const applyTheme = (t: AppTheme) => {
+      if (t === 'dark') {
+        root.classList.add('dark');
+        root.style.colorScheme = 'dark';
+      } else if (t === 'light') {
+        root.classList.remove('dark');
+        root.style.colorScheme = 'light';
       } else {
-        document.documentElement.classList.remove('dark');
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (isDark) {
+          root.classList.add('dark');
+          root.style.colorScheme = 'dark';
+        } else {
+          root.classList.remove('dark');
+          root.style.colorScheme = 'light';
+        }
       }
     };
+    applyTheme(theme);
 
-    applyTheme();
-    
-    // Listen for system theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = () => {
-      if (store.ui.theme === 'system') applyTheme();
+    // Primary Color Logic
+    root.style.setProperty('--primary-500', primaryColor);
+    const hexToRgb = (hex: string) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
     };
+    const rgbToHex = (r: number, g: number, b: number) => "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    const mix = (color: string, weight: number) => {
+        const rgb = hexToRgb(color);
+        if (!rgb) return color;
+        return rgbToHex(Math.round(rgb.r + (255 - rgb.r) * weight), Math.round(rgb.g + (255 - rgb.g) * weight), Math.round(rgb.b + (255 - rgb.b) * weight));
+    };
+    const darken = (color: string, weight: number) => {
+        const rgb = hexToRgb(color);
+        if (!rgb) return color;
+        return rgbToHex(Math.round(rgb.r * (1 - weight)), Math.round(rgb.g * (1 - weight)), Math.round(rgb.b * (1 - weight)));
+    };
+    root.style.setProperty('--primary-50', mix(primaryColor, 0.95));
+    root.style.setProperty('--primary-100', mix(primaryColor, 0.9));
+    root.style.setProperty('--primary-400', mix(primaryColor, 0.2));
+    root.style.setProperty('--primary-600', darken(primaryColor, 0.1));
+    root.style.setProperty('--primary-700', darken(primaryColor, 0.2));
     
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, [store.ui.theme]);
+  }, [store.present.ui]);
 
-  // Update CSS Variables for Primary Color
   useEffect(() => {
-    const colorKey = store.ui.primaryColor as keyof typeof PRIMARY_BRAND_COLORS;
-    const colors = PRIMARY_BRAND_COLORS[colorKey] || PRIMARY_BRAND_COLORS.indigo;
-    
-    const root = document.documentElement;
-    Object.entries(colors).forEach(([key, value]) => {
-      root.style.setProperty(`--primary-${key}`, value);
-    });
-  }, [store.ui.primaryColor]);
+    if (hasSelectedProject) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(store.present));
+    }
+  }, [store.present, hasSelectedProject]);
 
-  // Save state to local storage
   useEffect(() => {
-    // Debounce save
-    const timeout = setTimeout(() => {
-      localStorage.setItem('school_scheduler_state', JSON.stringify(store));
-    }, 1000);
-    return () => clearTimeout(timeout);
-  }, [store]);
+    const timer = setTimeout(() => setShowSplash(false), 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const addToast = (type: 'success' | 'error' | 'info', message: string, duration = 3000) => {
+  const addToast = (type: ToastMessage['type'], message: string) => {
     const id = generateId();
-    setToasts(prev => [...prev, { id, type, message, duration }]);
+    setToasts(prev => [...prev, { id, type, message }]);
+  };
+  const removeToast = (id: string) => setToasts(prev => prev.filter(t => t.id !== id));
+
+  // ✅ نوی فنکشن: دا ډاډ ترلاسه کوي چې نوی پروجکټ پاک جوړیږي
+  const handleNewProject = () => {
+      dispatch({ type: 'RESET_PROJECT' });
+      setHasSelectedProject(true);
+      addToast('info', t('toast_new_project'));
   };
 
-  const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
+  const handleImportProject = (data: any) => {
+      dispatch({ type: 'INIT', payload: data });
+      setHasSelectedProject(true);
+      addToast('success', t('toast_import_success'));
   };
-
-  const t = (key: string) => {
-    const lang = store.ui.language as AppLanguage;
-    return translations[lang]?.[key] || key;
-  };
-
-  // Check if we are in preview mode (print preview)
-  const isPreviewMode = store.ui.activeTab === 'print_preview';
 
   const renderPage = () => {
-    if (!store.activeProjectId && store.projects.length === 0 && !showSplash) {
-        // First time user, or all projects deleted
-        return (
-            <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                <h2 className="text-2xl font-bold mb-4">{t('welcome')}</h2>
-                <p className="text-slate-500 mb-6">{t('no_projects_desc')}</p>
-                <button 
-                    onClick={() => dispatch({ type: 'CREATE_PROJECT', payload: { name: t('my_first_project') } })}
-                    className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/30"
-                >
-                    {t('create_new_project')}
-                </button>
-            </div>
-        );
-    }
-    
-    if (!store.activeProjectId && !showSplash) {
-        return <ProjectSelector />;
+    if (activePage === 'print-preview') {
+        return <PrintPreviewPage onBack={() => setActivePage('export')} />;
     }
 
-    switch (store.ui.activeTab) {
+    switch(activePage) {
       case 'dashboard': return <Dashboard />;
       case 'teachers': return <Teachers />;
       case 'classes': return <Classes />;
-      case 'data_mgmt': return <DataMgmt />;
-      case 'design': return <DesignPage />;
       case 'settings': return <SettingsPage />;
+      case 'design': return <DesignPage />;
+      case 'data': return <DataMgmt />;
+      case 'export': return <ExportPage setPage={setActivePage} />;
       case 'help': return <HelpPage />;
       case 'about': return <AboutPage />;
-      case 'export': return <ExportPage />;
-      case 'print_preview': return <PrintPreviewPage />;
-      case 'projects': return <ProjectSelector />;
       default: return <Dashboard />;
     }
   };
 
+  const contextValue = {
+    state: store.present,
+    dispatch,
+    canUndo: store.past.length > 0,
+    canRedo: store.future.length > 0,
+    toasts,
+    addToast,
+    removeToast,
+    t
+  };
+
+  const isPreviewMode = activePage === 'print-preview';
+
   return (
-    <AppStateContext.Provider value={{ state: store, dispatch, addToast, t }}>
-      {showSplash ? (
-        <SplashScreen onFinish={() => setShowSplash(false)} />
-      ) : (
+    <AppContext.Provider value={contextValue}>
+      <AnimatePresence>
+        {showSplash && <SplashScreen />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {!showSplash && !hasSelectedProject && (
+          <ProjectSelector 
+            onNewProject={handleNewProject} 
+            onImportProject={handleImportProject} 
+          />
+        )}
+      </AnimatePresence>
+
+      {hasSelectedProject && (
         <div 
-            className={`flex h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300 ${store.ui.direction === 'rtl' ? 'font-sans' : ''}`} 
-            dir={store.ui.direction}
-            style={{
-                // دا برخه هم د سټاټوس بار فاصله ساتي که چیرې CSS کار ونکړي
-                paddingTop: 'env(safe-area-inset-top)',
-                paddingLeft: 'env(safe-area-inset-left)',
-                paddingRight: 'env(safe-area-inset-right)',
-                paddingBottom: 'env(safe-area-inset-bottom)',
-                boxSizing: 'border-box'
-            }}
+          className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300"
+          style={{
+             /* دا کوډ د سټاټوس بار فاصله ساتي */
+             paddingTop: 'env(safe-area-inset-top)',
+             paddingLeft: 'env(safe-area-inset-left)',
+             paddingRight: 'env(safe-area-inset-right)',
+             paddingBottom: 'env(safe-area-inset-bottom)',
+             boxSizing: 'border-box'
+          }}
         >
+            
             {!isPreviewMode && (
-                <div className={`fixed inset-y-0 ${store.ui.direction === 'rtl' ? 'right-0' : 'left-0'} z-50 transform lg:transform-none lg:static transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : (store.ui.direction === 'rtl' ? 'translate-x-full' : '-translate-x-full')} lg:translate-x-0`}>
-                    <Sidebar onCloseMobile={() => setIsMobileMenuOpen(false)} />
+                <div 
+                    className={`
+                        sidebar z-40 bg-slate-900 text-white shadow-2xl transition-all duration-300 ease-in-out flex-shrink-0
+                        fixed inset-y-0 right-0 
+                        lg:static lg:h-full
+                        ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+                    `}
+                    style={{ width: isSidebarCollapsed ? '5rem' : '16rem' }} 
+                >
+                <Sidebar 
+                    activePage={activePage} 
+                    setPage={(p) => { setActivePage(p); setIsMobileMenuOpen(false); }} 
+                    isCollapsed={isSidebarCollapsed}
+                    toggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                />
                 </div>
             )}
             
-            <div className="flex-1 flex flex-col h-full overflow-hidden relative">
-            
-            {!isPreviewMode && store.ui.showHeader && (
-                <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 lg:p-6 flex items-center justify-between sticky top-0 z-20">
-                        <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden p-2 -ml-2 mr-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-200 transition-colors">
+            <div className="app-container flex-1 flex flex-col h-full overflow-hidden relative min-w-0 transition-all duration-300">
+            {!isPreviewMode && (
+                <header className="lg:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm z-30 shrink-0">
+                        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-200 transition-colors">
                             <Menu size={24} />
                         </button>
                         <div className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
@@ -443,10 +481,11 @@ export default function App() {
             </div>
 
             <div id="export-canvas-container" style={{ width: '2000px', boxSizing: 'border-box' }}>
-                <TimetableTemplate state={store} schedule={store.schedules.find(s => s.id === store.currentScheduleId) || { id: 'temp', name: 'Temp', entries: store.lessons, createdAt: 0, updatedAt: 0 }} />
+                <TimetableTemplate state={store.present} />
             </div>
+
         </div>
       )}
-    </AppStateContext.Provider>
+    </AppContext.Provider>
   );
 }
