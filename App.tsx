@@ -421,17 +421,7 @@ export default function App() {
       </AnimatePresence>
 
       {hasSelectedProject && (
-        <div 
-          className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300"
-          style={{
-             /* دا کوډ د سټاټوس بار فاصله ساتي */
-             paddingTop: 'env(safe-area-inset-top)',
-             paddingLeft: 'env(safe-area-inset-left)',
-             paddingRight: 'env(safe-area-inset-right)',
-             paddingBottom: 'env(safe-area-inset-bottom)',
-             boxSizing: 'border-box'
-          }}
-        >
+        <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300">
             
             {!isPreviewMode && (
                 <div 
